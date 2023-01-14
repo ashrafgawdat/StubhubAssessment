@@ -33,9 +33,22 @@ namespace StubhubAssessment
             MarketingEngine marketingEngine = new(events);
             var customerCityEvents = marketingEngine.GetCustomerCityEvents(customer);
             var customerBirthDayEvents = marketingEngine.GetCustomerBirthDayEvents(customer, 7);
-            var customerEvents = customerCityEvents.Union(customerBirthDayEvents).ToList();
+            var customerClosestEvents = marketingEngine.GetCustomerClosestEvents(customer, 50, 5);
+            var customerEvents = customerCityEvents.Union(customerBirthDayEvents).Union(customerClosestEvents).ToList();
             customerEvents.ForEach(e => MarketingEngine.SendCustomerNotifications(customer, e));
         }
+
+        public record City(string Name, int X, int Y);
+        public static readonly IDictionary<string, City> Cities = new Dictionary<string, City>()
+        {
+            { "New York", new City("New York", 3572, 1455) },
+            { "Los Angeles", new City("Los Angeles", 462, 975) },
+            { "San Francisco", new City("San Francisco", 183, 1233) },
+            { "Boston", new City("Boston", 3778, 1566) },
+            { "Chicago", new City("Chicago", 2608, 1525) },
+            { "Washington", new City("Washington", 3358, 1320) },
+        };
+
         public class Event
         {
             public int Id { get; set; }
@@ -57,40 +70,66 @@ namespace StubhubAssessment
             public string City { get; set; }
             public DateTime BirthDate { get; set; }
         }
-    }
 
-    public class MarketingEngine
-    {
-        private readonly List<Event> _events;
-        public MarketingEngine(List<Event> events)
+        public class MarketingEngine
         {
-            _events = events;
-        }
+            private readonly List<Event> _events;
+            public MarketingEngine(List<Event> events)
+            {
+                _events = events;
+            }
 
-        public List<Event> GetCustomerCityEvents(Customer customer)
-        {
-            return _events.Where(e => e.City == customer.City).ToList();
-        }
+            public List<Event> GetCustomerCityEvents(Customer customer)
+            {
+                return _events.Where(e => e.City == customer.City).ToList();
+            }
 
-        public List<Event> GetCustomerBirthDayEvents(Customer customer, int daysBefore)
-        {
-            var nextBirthDate = GetCustomerNextBirthDay(customer);
+            public List<Event> GetCustomerBirthDayEvents(Customer customer, int daysBefore)
+            {
+                var nextBirthDate = GetCustomerNextBirthDay(customer);
 
-            return _events.Where(e => (nextBirthDate - e.Date).Days == daysBefore).ToList();
-        }
-        public static void SendCustomerNotifications(Customer customer, Event e)
-        {
-            Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} at {e.Date}");
-        }
+                return _events.Where(e => (nextBirthDate - e.Date).Days == daysBefore).ToList();
+            }
 
-        private static DateTime GetCustomerNextBirthDay(Customer customer)
-        {
-            var nextBirthDayYear = DateTime.Now.Year;
-            var thisYearBirthDay = new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
-            if (thisYearBirthDay < DateTime.Now)
-                nextBirthDayYear++;
+            public List<Event> GetCustomerClosestEvents(Customer customer, int maxDistance, int eventCount)
+            {
+                var customerCity = Cities.First(c => c.Key == customer.City).Value;
+                return _events
+                    .Select(e => new { Event = e, Distance = GetDistance(customerCity, e) })
+                    .Where(e => e.Distance.HasValue && e.Distance <= maxDistance)
+                    .OrderBy(e => e.Distance)
+                    .Take(eventCount)
+                    .Select(e => e.Event)
+                    .ToList();
+            }
 
-            return new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
+            public static void SendCustomerNotifications(Customer customer, Event e)
+            {
+                Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} at {e.Date}");
+            }
+
+            private static DateTime GetCustomerNextBirthDay(Customer customer)
+            {
+                var nextBirthDayYear = DateTime.Now.Year;
+                var thisYearBirthDay = new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
+                if (thisYearBirthDay < DateTime.Now)
+                    nextBirthDayYear++;
+
+                return new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
+            }
+
+            private static int? GetDistance(City city, Event e)
+            {
+                if (!Cities.ContainsKey(e.City))
+                    return null;
+
+                return GetDistance(city, Cities.First(c => c.Key == e.City).Value);
+            }
+
+            private static int GetDistance(City city1, City city2)
+            {
+                return Math.Abs(city1.X - city2.X) + Math.Abs(city1.Y - city2.Y);
+            }
         }
     }
 }
