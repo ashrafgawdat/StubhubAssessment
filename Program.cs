@@ -8,18 +8,18 @@ namespace StubhubAssessment
         {
             var events = new List<Event>
             {
-                new Event(1, "Phantom of the Opera", "New York", new DateTime(2023, 12, 23)),
-                new Event(2, "Metallica", "Los Angeles", new DateTime(2023, 12, 02)),
-                new Event(3, "Metallica", "New York", new DateTime(2023, 12, 06)),
-                new Event(4, "Metallica", "Boston", new DateTime(2023, 10, 23)),
-                new Event(5, "LadyGaGa", "New York", new DateTime(2023, 09, 20)),
-                new Event(6, "LadyGaGa", "Boston", new DateTime(2023, 08, 01)),
-                new Event(7, "LadyGaGa", "Chicago", new DateTime(2023, 07, 04)),
-                new Event(8, "LadyGaGa", "San Francisco", new DateTime(2023, 07, 07)),
-                new Event(9, "LadyGaGa", "Washington", new DateTime(2023, 05, 22)),
-                new Event(10, "Metallica", "Chicago", new DateTime(2023, 01, 01)),
-                new Event(11, "Phantom of the Opera", "San Francisco", new DateTime(2023, 07, 04)),
-                new Event(12, "Phantom of the Opera", "Chicago", new DateTime(2024, 05, 15))
+                new Event(1, "Phantom of the Opera", "New York", new DateTime(2023, 12, 23), 25),
+                new Event(2, "Metallica", "Los Angeles", new DateTime(2023, 12, 02), 20),
+                new Event(3, "Metallica", "New York", new DateTime(2023, 12, 06), 13),
+                new Event(4, "Metallica", "Boston", new DateTime(2023, 10, 23), 45),
+                new Event(5, "LadyGaGa", "New York", new DateTime(2023, 09, 20), 35),
+                new Event(6, "LadyGaGa", "Boston", new DateTime(2023, 08, 01), 16),
+                new Event(7, "LadyGaGa", "Chicago", new DateTime(2023, 07, 04), 30),
+                new Event(8, "LadyGaGa", "San Francisco", new DateTime(2023, 07, 07), 28),
+                new Event(9, "LadyGaGa", "Washington", new DateTime(2023, 05, 22), 18),
+                new Event(10, "Metallica", "Chicago", new DateTime(2023, 01, 01), 32),
+                new Event(11, "Phantom of the Opera", "San Francisco", new DateTime(2023, 07, 04), 45),
+                new Event(12, "Phantom of the Opera", "Chicago", new DateTime(2024, 05, 15), 45)
             };
             var customer = new Customer()
             {
@@ -31,10 +31,12 @@ namespace StubhubAssessment
             };
 
             MarketingEngine marketingEngine = new(events);
-            var customerCityEvents = marketingEngine.GetCustomerCityEvents(customer);
-            var customerBirthDayEvents = marketingEngine.GetCustomerBirthDayEvents(customer, 7);
-            var customerClosestEvents = marketingEngine.GetCustomerClosestEvents(customer, 50, 5);
-            var customerEvents = customerCityEvents.Union(customerBirthDayEvents).Union(customerClosestEvents).ToList();
+            var eventLists = new List<List<Event>>();
+            eventLists.Add(marketingEngine.GetCustomerCityEvents(customer));
+            eventLists.Add(marketingEngine.GetCustomerBirthDayEvents(customer, 7));
+            eventLists.Add(marketingEngine.GetCustomerClosestEvents(customer, 50, 5));
+            eventLists.Add(marketingEngine.GetCustomerCheapEvents(customer, 20, 5));
+            var customerEvents = eventLists.Aggregate(new List<Event>(), (events, next) => events.Union(next).ToList());
             customerEvents.ForEach(e => MarketingEngine.SendCustomerNotifications(customer, e));
         }
 
@@ -55,12 +57,14 @@ namespace StubhubAssessment
             public string Name { get; set; }
             public string City { get; set; }
             public DateTime Date { get; set; }
-            public Event(int id, string name, string city, DateTime date)
+            public decimal Price { get; set; }
+            public Event(int id, string name, string city, DateTime date, decimal price)
             {
-                this.Id = id;
-                this.Name = name;
-                this.City = city;
-                this.Date = date;
+                Id = id;
+                Name = name;
+                City = city;
+                Date = date;
+                Price = price;
             }
         }
         public class Customer
@@ -105,9 +109,14 @@ namespace StubhubAssessment
                     .ToList();
             }
 
+            public List<Event> GetCustomerCheapEvents(Customer customer, int maxPrice, int eventCount)
+            {
+                return _events.Where(e => e.Price <= maxPrice).OrderBy(e => e.Price).Take(eventCount).ToList();
+            }
+
             public static void SendCustomerNotifications(Customer customer, Event e)
             {
-                Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} at {e.Date}");
+                Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} at {e.Date} at price {e.Price}");
             }
 
             private static DateTime GetCustomerNextBirthDay(Customer customer)
