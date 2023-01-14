@@ -1,6 +1,8 @@
-﻿namespace StubhubAssessment
+﻿using static StubhubAssessment.Program;
+
+namespace StubhubAssessment
 {
-    internal class Program
+    public class Program
     {
         static void Main(string[] args)
         {
@@ -27,6 +29,10 @@
                 City = "New York",
                 BirthDate = new DateTime(1995, 05, 10)
             };
+
+            MarketingEngine marketingEngine = new(events);
+            var customerEvents = marketingEngine.GetCustomerCityEvents(customer);
+            customerEvents.ForEach(e => MarketingEngine.SendCustomerNotifications(customer, e));
         }
         public class Event
         {
@@ -48,6 +54,24 @@
             public string Name { get; set; }
             public string City { get; set; }
             public DateTime BirthDate { get; set; }
+        }
+    }
+
+    public class MarketingEngine
+    {
+        private readonly List<Event> _events;
+        public MarketingEngine(List<Event> events)
+        {
+            _events = events;
+        }
+
+        public List<Event> GetCustomerCityEvents(Customer customer)
+        {
+            return _events.Where(e => e.City == customer.City).ToList();
+        }
+        public static void SendCustomerNotifications(Customer customer, Event e)
+        {
+            Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} at {e.Date}");
         }
     }
 }
