@@ -74,9 +74,11 @@ namespace StubhubAssessment
         public class MarketingEngine
         {
             private readonly List<Event> _events;
+            private readonly Dictionary<string, int> _cityDistances;
             public MarketingEngine(List<Event> events)
             {
                 _events = events;
+                _cityDistances = SetCityDistanceCache(Cities.Values.ToList());
             }
 
             public List<Event> GetCustomerCityEvents(Customer customer)
@@ -118,18 +120,39 @@ namespace StubhubAssessment
                 return new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
             }
 
-            private static int? GetDistance(City city, Event e)
+            private int? GetDistance(City city, Event e)
             {
                 if (!Cities.ContainsKey(e.City))
                     return null;
 
-                return GetDistance(city, Cities.First(c => c.Key == e.City).Value);
+                var eventCity = Cities.First(c => c.Key == e.City).Value;
+                return _cityDistances[CityDistanceCacheItemKey(city, eventCity)];
+                //return GetDistance(city, eventCity);
             }
 
             private static int GetDistance(City city1, City city2)
             {
                 return Math.Abs(city1.X - city2.X) + Math.Abs(city1.Y - city2.Y);
             }
+
+            private static Dictionary<string, int> SetCityDistanceCache(List<City> cities)
+            {
+                Dictionary<string, int> dictionary = new();
+                for (int i = 0; i < cities.Count; i++)
+                {
+                    var city1 = cities[i];
+                    for (int j = 0; j < cities.Count; j++)
+                    {
+                        var city2 = cities[j];
+                        var distance = GetDistance(city1, city2);
+                        dictionary.Add(CityDistanceCacheItemKey(city1, city2), distance);
+                    }
+                }
+
+                return dictionary;
+            }
+
+            private static string CityDistanceCacheItemKey(City city1, City city2) => $"{city1.Name} - {city2.Name}";
         }
     }
 }
