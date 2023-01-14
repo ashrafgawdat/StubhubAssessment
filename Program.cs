@@ -31,7 +31,9 @@ namespace StubhubAssessment
             };
 
             MarketingEngine marketingEngine = new(events);
-            var customerEvents = marketingEngine.GetCustomerCityEvents(customer);
+            var customerCityEvents = marketingEngine.GetCustomerCityEvents(customer);
+            var customerBirthDayEvents = marketingEngine.GetCustomerBirthDayEvents(customer, 7);
+            var customerEvents = customerCityEvents.Union(customerBirthDayEvents).ToList();
             customerEvents.ForEach(e => MarketingEngine.SendCustomerNotifications(customer, e));
         }
         public class Event
@@ -69,9 +71,26 @@ namespace StubhubAssessment
         {
             return _events.Where(e => e.City == customer.City).ToList();
         }
+
+        public List<Event> GetCustomerBirthDayEvents(Customer customer, int daysBefore)
+        {
+            var nextBirthDate = GetCustomerNextBirthDay(customer);
+
+            return _events.Where(e => (nextBirthDate - e.Date).Days == daysBefore).ToList();
+        }
         public static void SendCustomerNotifications(Customer customer, Event e)
         {
             Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} at {e.Date}");
+        }
+
+        private static DateTime GetCustomerNextBirthDay(Customer customer)
+        {
+            var nextBirthDayYear = DateTime.Now.Year;
+            var thisYearBirthDay = new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
+            if (thisYearBirthDay < DateTime.Now)
+                nextBirthDayYear++;
+
+            return new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
         }
     }
 }
