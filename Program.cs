@@ -2,25 +2,69 @@
 
 namespace StubhubAssessment
 {
-    public class Program
+    internal class Program
     {
         static void Main(string[] args)
         {
-            var events = new List<Event>
+            /*
+            1. You can see here a list of events, a customer object. Try to understand the code, make it compile.
+            2. The goal is to create a MarketingEngine class sending all events through the constructor as parameter and
+            make it print the events that are happening in the same city as the customer. To do that, inside this class, create a
+            SendCustomerNotifications method which will receive a customer as parameter and an Event parameter and will
+            mock the the Notification Service API. DON’T MODIFY THIS METHOD, unless you want to add the price to the
+            console.writeline for task 7. Add this ConsoleWriteLine inside the Method to mock the service. Inside this method you
+            can add the code you need to run this task correctly but you cant modify the console writeline:
+            Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} at {e.Date}");
+            3. As part of a new campaign, we need to be able to let customers know about events that are coming up
+            close to their next birthday. You can make a guess and add it to the MarketingEngine class if you want to. So we still
+            want to keep how things work now, which is that we email customers about events in their city or the event closest to
+            next customer&#39;s birthday, and then we email them again at some point during the year. The current customer, his
+            birthday is on may. So it&#39;s already in the past. So we want to find the next one, which is 23. How would you like the
+            code to be built? We don&#39;t just want functionality; we want more than that. We want to know how you plan to make
+            that work. Please code it.
+            4. The next requirement is to extend the solution to be able to send notifications for the five closest events to
+            the customer. The interviewer here can paste a method to help you, or ask you to search it. We will attach a way to
+            calculate the distance.
+
+            public record City(string Name, int X, int Y);
+            public static readonly IDictionary<string, City> Cities = new Dictionary<string, City>()
             {
-                new Event(1, "Phantom of the Opera", "New York", new DateTime(2023, 12, 23), 25),
-                new Event(2, "Metallica", "Los Angeles", new DateTime(2023, 12, 02), 20),
-                new Event(3, "Metallica", "New York", new DateTime(2023, 12, 06), 13),
-                new Event(4, "Metallica", "Boston", new DateTime(2023, 10, 23), 45),
-                new Event(5, "LadyGaGa", "New York", new DateTime(2023, 09, 20), 35),
-                new Event(6, "LadyGaGa", "Boston", new DateTime(2023, 08, 01), 16),
-                new Event(7, "LadyGaGa", "Chicago", new DateTime(2023, 07, 04), 30),
-                new Event(8, "LadyGaGa", "San Francisco", new DateTime(2023, 07, 07), 28),
-                new Event(9, "LadyGaGa", "Washington", new DateTime(2023, 05, 22), 18),
-                new Event(10, "Metallica", "Chicago", new DateTime(2023, 01, 01), 32),
-                new Event(11, "Phantom of the Opera", "San Francisco", new DateTime(2023, 07, 04), 45),
-                new Event(12, "Phantom of the Opera", "Chicago", new DateTime(2024, 05, 15), 45)
+            { "New York", new City("New York", 3572, 1455) },
+            { "Los Angeles", new City("Los Angeles", 462, 975) },
+            { "San Francisco", new City("San Francisco", 183, 1233) },
+            { "Boston", new City("Boston", 3778, 1566) },
+            { "Chicago", new City("Chicago", 2608, 1525) },
+            { "Washington", new City("Washington", 3358, 1320) },
             };
+            var customerCityInfo = Cities.Where(c => c.Key == city).Single().Value;
+            var distance = Math.Abs(customerCityInfo.X - eventCityInfo.X) + Math.Abs(customerCityInfo.Y - eventCityInfo.Y);
+            5. If the calculation of the distances is an API call which could fail or is too expensive, how will you improve
+            the code written in 4? Think in caching the data which could be code it as a dictionary. You need to store the
+            distances between two cities. Example:
+            New York - Boston => 400
+            Boston - Washington => 540
+            Boston - New York => Should not exist because "New York - Boston" is already stored and the distance is the
+            same.
+            6. If the calculation of the distances is an API call which could fail, what can be done to avoid the failure?
+            Think in HTTPResponse Answers: Timeoute, 404, 403. How can you handle that exceptions? Code it.
+            7. If we also want to sort the resulting events by other fields like price, etc. to determine whichones to send to
+            the customer, how would you implement it? Code it.
+            */
+
+            var events = new List<Event>{
+                new Event(1, "Phantom of the Opera", "New York", new DateTime(2023,12,23)),
+                new Event(2, "Metallica", "Los Angeles", new DateTime(2023,12,02)),
+                new Event(3, "Metallica", "New York", new DateTime(2023,12,06)),
+                new Event(4, "Metallica", "Boston", new DateTime(2023,10,23)),
+                new Event(5, "LadyGaGa", "New York", new DateTime(2023,09,20)),
+                new Event(6, "LadyGaGa", "Boston", new DateTime(2023,08,01)),
+                new Event(7, "LadyGaGa", "Chicago", new DateTime(2023,07,04)),
+                new Event(8, "LadyGaGa", "San Francisco", new DateTime(2023,07,07)),
+                new Event(9, "LadyGaGa", "Washington", new DateTime(2023,05,22)),
+                new Event(10, "Metallica", "Chicago", new DateTime(2023,01,01)),
+                new Event(11, "Phantom of the Opera", "San Francisco", new DateTime(2023,07,04)),
+                new Event(12, "Phantom of the Opera", "Chicago", new DateTime(2024,05,15))
+                };
             var customer = new Customer()
             {
                 Id = 1,
@@ -31,25 +75,27 @@ namespace StubhubAssessment
             };
 
             MarketingEngine marketingEngine = new(events);
-            var eventLists = new List<List<Event>>();
-            eventLists.Add(marketingEngine.GetCustomerCityEvents(customer));
-            eventLists.Add(marketingEngine.GetCustomerBirthDayEvents(customer, 7));
-            eventLists.Add(marketingEngine.GetCustomerClosestEvents(customer, 50, 5));
-            eventLists.Add(marketingEngine.GetCustomerCheapEvents(customer, 20, 5));
-            var customerEvents = eventLists.Aggregate(new List<Event>(), (events, next) => events.Union(next).ToList());
-            customerEvents.ForEach(e => MarketingEngine.SendCustomerNotifications(customer, e));
+            //var customerEvents = marketingEngine.GetEventsSameCity(customer);
+
+            //var customerEvents = marketingEngine.GetEventsNearBirthday(customer, 5);
+
+            var customerEvents = marketingEngine.GetClosestEvents(customer, 10);
+
+            //customerEvents.ForEach(e => marketingEngine.SendCustomerNotifications(customer, e));
+
         }
 
         public record City(string Name, int X, int Y);
+
         public static readonly IDictionary<string, City> Cities = new Dictionary<string, City>()
-        {
+            {
             { "New York", new City("New York", 3572, 1455) },
             { "Los Angeles", new City("Los Angeles", 462, 975) },
             { "San Francisco", new City("San Francisco", 183, 1233) },
             { "Boston", new City("Boston", 3778, 1566) },
             { "Chicago", new City("Chicago", 2608, 1525) },
             { "Washington", new City("Washington", 3358, 1320) },
-        };
+            };
 
         public class Event
         {
@@ -57,14 +103,12 @@ namespace StubhubAssessment
             public string Name { get; set; }
             public string City { get; set; }
             public DateTime Date { get; set; }
-            public decimal Price { get; set; }
-            public Event(int id, string name, string city, DateTime date, decimal price)
+            public Event(int id, string name, string city, DateTime date)
             {
-                Id = id;
-                Name = name;
-                City = city;
-                Date = date;
-                Price = price;
+                this.Id = id;
+                this.Name = name;
+                this.City = city;
+                this.Date = date;
             }
         }
         public class Customer
@@ -75,93 +119,100 @@ namespace StubhubAssessment
             public DateTime BirthDate { get; set; }
         }
 
+        /*-------------------------------------
+        Coordinates are roughly to scale with miles in the USA
+        2000 +----------------------+
+        | |
+        | |
+        Y | |
+        | |
+        | |
+        | |
+        | |
+        0 +----------------------+
+        0 X 4000
+        ---------------------------------------*/
+
         public class MarketingEngine
         {
+            private readonly Dictionary<string, decimal> _distancesCache;
             private readonly List<Event> _events;
-            private readonly Dictionary<string, int> _cityDistances;
             public MarketingEngine(List<Event> events)
             {
                 _events = events;
-                _cityDistances = SetCityDistanceCache(Cities.Values.ToList());
+                _distancesCache = GetCitiesDistances();
             }
 
-            public List<Event> GetCustomerCityEvents(Customer customer)
+            public List<Event> GetEventsSameCity(Customer customer)
             {
                 return _events.Where(e => e.City == customer.City).ToList();
             }
 
-            public List<Event> GetCustomerBirthDayEvents(Customer customer, int daysBefore)
+            public List<Event> GetEventsNearBirthday(Customer customer, int eventsCount)
             {
-                var nextBirthDate = GetCustomerNextBirthDay(customer);
+                var nextBirthday = new DateTime(DateTime.Now.Year, customer.BirthDate.Month, customer.BirthDate.Day);
+                if (nextBirthday < DateTime.Now.Date)
+                    nextBirthday.AddYears(1);
 
-                return _events.Where(e => (nextBirthDate - e.Date).Days == daysBefore).ToList();
+                return _events.Where(e => e.Date.Date > nextBirthday)
+                        .OrderBy(e => e.Date)
+                        .Take(eventsCount)
+                        .ToList();
             }
 
-            public List<Event> GetCustomerClosestEvents(Customer customer, int maxDistance, int eventCount)
+            public List<Event> GetClosestEvents(Customer customer, int eventsCount)
             {
                 var customerCity = Cities.First(c => c.Key == customer.City).Value;
-                return _events
-                    .Select(e => new { Event = e, Distance = GetDistance(customerCity, e) })
-                    .Where(e => e.Distance.HasValue && e.Distance <= maxDistance)
-                    .OrderBy(e => e.Distance)
-                    .Take(eventCount)
-                    .Select(e => e.Event)
-                    .ToList();
-            }
-
-            public List<Event> GetCustomerCheapEvents(Customer customer, int maxPrice, int eventCount)
-            {
-                return _events.Where(e => e.Price <= maxPrice).OrderBy(e => e.Price).Take(eventCount).ToList();
-            }
-
-            public static void SendCustomerNotifications(Customer customer, Event e)
-            {
-                Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} at {e.Date} at price {e.Price}");
-            }
-
-            private static DateTime GetCustomerNextBirthDay(Customer customer)
-            {
-                var nextBirthDayYear = DateTime.Now.Year;
-                var thisYearBirthDay = new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
-                if (thisYearBirthDay < DateTime.Now)
-                    nextBirthDayYear++;
-
-                return new DateTime(nextBirthDayYear, customer.BirthDate.Month, customer.BirthDate.Day);
-            }
-
-            private int? GetDistance(City city, Event e)
-            {
-                if (!Cities.ContainsKey(e.City))
-                    return null;
-
-                var eventCity = Cities.First(c => c.Key == e.City).Value;
-                return _cityDistances[CityDistanceCacheItemKey(city, eventCity)];
-                //return GetDistance(city, eventCity);
-            }
-
-            private static int GetDistance(City city1, City city2)
-            {
-                return Math.Abs(city1.X - city2.X) + Math.Abs(city1.Y - city2.Y);
-            }
-
-            private static Dictionary<string, int> SetCityDistanceCache(List<City> cities)
-            {
-                Dictionary<string, int> dictionary = new();
-                for (int i = 0; i < cities.Count; i++)
+                var cityDistances = new Dictionary<Event, decimal>();
+                foreach (var e in _events)
                 {
-                    var city1 = cities[i];
-                    for (int j = 0; j < cities.Count; j++)
+                    if (Cities.ContainsKey(e.City))
                     {
-                        var city2 = cities[j];
-                        var distance = GetDistance(city1, city2);
-                        dictionary.Add(CityDistanceCacheItemKey(city1, city2), distance);
+                        var distance = _distancesCache[CitiesDistancesKey(customerCity, Cities[e.City])];
+                        cityDistances.Add(e, distance);
                     }
                 }
 
-                return dictionary;
+                var lstWithDistances = cityDistances.OrderBy(e => e.Value).Take(eventsCount);
+
+                lstWithDistances.ToList().ForEach(e => SendCustomerNotifications(customer, e.Key, e.Value));
+
+                return lstWithDistances.Select(e => e.Key).ToList();
             }
 
-            private static string CityDistanceCacheItemKey(City city1, City city2) => $"{city1.Name} - {city2.Name}";
+            public void SendCustomerNotifications(Customer customer, Event e)
+            {
+                Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} in {e.City} at {e.Date}");
+            }
+
+            public void SendCustomerNotifications(Customer customer, Event e, decimal distance)
+            {
+                Console.WriteLine($"{customer.Name} from {customer.City} event {e.Name} in {e.City} at {e.Date} distance {distance}");
+            }
+
+            public Dictionary<string, decimal> GetCitiesDistances()
+            {
+                var distances = new Dictionary<string, decimal>();
+                var lstCities = Cities.Values.ToList();
+                for (int i = 0; i < lstCities.Count; i++)
+                {
+                    var city1 = lstCities[i];
+                    for (int j = 0; j < lstCities.Count; j++)
+                    {
+                        var city2 = lstCities[j];
+                        distances.Add(CitiesDistancesKey(city1, city2), GetCityDistance(city1, city2));
+                    }
+                }
+
+                return distances;
+            }
+
+            private string CitiesDistancesKey(City city1, City city2) => $"{city1.Name} - {city2.Name}";
+
+            private decimal GetCityDistance(City city1, City city2)
+            {
+                return Math.Abs(city1.X - city2.X) + Math.Abs(city1.Y - city2.Y);
+            }
         }
     }
 }
